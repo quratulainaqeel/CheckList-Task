@@ -14,12 +14,12 @@ const TaskComponent = ({ task }) => {
       <h5>{task.name}</h5>
       {checklistItems.map((item, index) => (
         <div key={index}>
-          <input
+          <input 
             type="checkbox"
             checked={item.checked}
             onChange={() => handleCheckboxChange(index)}
           />
-          <label>{item.text}</label>
+          <label >{item.text}</label>
         </div>
       ))}
     </div>

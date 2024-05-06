@@ -10,7 +10,7 @@ const App = () => {
     <div>
       <Routes>
         <Route path='/' element={<Protected Component={Login} />} />
-        <Route path='/signup' element={<Signup />} />
+        <Route path='/signup' element={<Protected Component={Signup}/>} />
         <Route path='/home' element={<Protected Component={Home} />} />
       </Routes>
     </div>
