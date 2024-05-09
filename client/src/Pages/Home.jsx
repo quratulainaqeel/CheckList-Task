@@ -1,30 +1,50 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import Modal from 'react-bootstrap/Modal';
 import FloatingLabel from 'react-bootstrap/FloatingLabel';
 import Form from 'react-bootstrap/Form';
+import axios from 'axios'
+import { GlobalContext } from '../Context/Context';
+import { decodeToken } from 'react-jwt'
 
 const Home = () => {
+  const { state } = useContext(GlobalContext)
+  const user = decodeToken(state.token)
+
   const [tasks, setTasks] = useState([]);
   const [taskTitle, setTaskTitle] = useState('');
   const [checklistName, setChecklistName] = useState('');
   const [checklistItems, setChecklistItems] = useState(['']);
   const [show, setShow] = useState(false);
 
+  useEffect(() => {
+    axios.get('http://localhost:3000/api/get-all-task').then(json => {
+      Filter(json.data.tasks)
+    })
+  }, [])
+
   const handleClose = () => setShow(false);
   const handleShow = () => setShow(true);
 
   const handleAddTask = (e) => {
     e.preventDefault();
-    const newTask = {
-      title: taskTitle,
+
+    const payload = {
+      taskTitle: taskTitle,
       checklists: [
         {
           name: checklistName,
-          items: checklistItems.map(item => ({ name: item, checked: false }))
+          items: checklistItems.map(item => ({ text: item, checked: false }))
         }
-      ]
+      ],
+      userEmail: user.email
     };
-    setTasks([...tasks, newTask]);
+
+    axios.post('http://localhost:3000/api/add-task', payload).then(json => {
+      Filter(json.data.tasks)
+    })
+
+    console.log(payload)
+    // setTasks([...tasks, payload]);
     handleClose();
     setTaskTitle('');
     setChecklistName('');
@@ -35,11 +55,36 @@ const Home = () => {
     setChecklistItems([...checklistItems, '']);
   };
 
-  const handleCheckItem = (taskIndex, checklistIndex, itemIndex) => {
-    const updatedTasks = [...tasks];
-    updatedTasks[taskIndex].checklists[checklistIndex].items[itemIndex].checked = !updatedTasks[taskIndex].checklists[checklistIndex].items[itemIndex].checked;
-    setTasks(updatedTasks);
+  const handleCheckItem = async (taskIndex, checklistIndex, itemIndex) => {
+    const taskId = tasks[taskIndex]._id;
+    const updatedItem = tasks[taskIndex].checklists[checklistIndex].items[itemIndex];
+    updatedItem.checked = !updatedItem.checked;
+
+    const payload = {
+      _id: taskId,
+      checklistIndex: checklistIndex,
+      itemIndex: itemIndex,
+      checked: updatedItem.checked
+    }
+
+    try {
+      axios.put('http://localhost:3000/api/update-task', payload).then(json => {
+        Filter(json.data.tasks)
+      })
+
+      const updatedTasks = [...tasks];
+      updatedTasks[taskIndex].checklists[checklistIndex].items[itemIndex] = updatedItem;
+      setTasks(updatedTasks);
+    } catch (error) {
+      console.error('Error updating checkbox value:', error);
+      // Handle error if needed
+    }
   };
+
+  const Filter = (task_list) => {
+    const filteredTasks = task_list.filter(task => task.userEmail === user.email);
+    setTasks(filteredTasks);
+  }
 
   const handleItemChange = (index, e) => {
     const newItems = [...checklistItems];
@@ -50,13 +95,14 @@ const Home = () => {
   return (
     <div className='container'>
       <button className="btn btn-dark px-3 my-4" type="button" onClick={handleShow}>ADD Task</button>
-      {tasks.map((task, taskIndex) => (
+      {tasks?.map((task, taskIndex) => (
         <div key={taskIndex} className="border my-3">
-          <h4>{task.title}</h4>
+          <h1>{task.taskTitle}</h1>
+          <hr />
           {task.checklists.map((checklist, checklistIndex) => (
             <div key={checklistIndex}>
-              <p>● {checklist.name}:</p>
-              <ul>
+              <h5>● {checklist.name}:</h5>
+              <ul style={{ listStyle: 'none' }}>
                 {checklist.items.map((item, itemIndex) => (
                   <li key={itemIndex}>
                     <input
@@ -64,7 +110,7 @@ const Home = () => {
                       checked={item.checked}
                       onChange={() => handleCheckItem(taskIndex, checklistIndex, itemIndex)}
                     />
-                    {item.name}
+                    {item.text}
                   </li>
                 ))}
               </ul>

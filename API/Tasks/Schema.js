@@ -1,7 +1,7 @@
 const { Schema, model } = require("mongoose");
 
 const TaskSchema = new Schema({
-  tasktitle: {
+  taskTitle: {
     type: String,
   },
   checklists: [
@@ -24,7 +24,7 @@ const TaskSchema = new Schema({
       ],
     },
   ],
-  useremail: {
+  userEmail: {
     type: String,
   },
 });
