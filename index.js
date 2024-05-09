@@ -8,7 +8,7 @@ app.use(express.json());
 
 app.use(cors());
 app.use("/api", require("./API/Users/Routers"));
-// app.use("/api", require("./API/Tasks/Routers"));
+app.use("/api", require("./API/Tasks/Routers"));
 
 app.get("/", (req, res) => {
   res.send("Hello World ki haa ha!");

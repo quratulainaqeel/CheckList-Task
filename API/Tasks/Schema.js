@@ -26,7 +26,6 @@ const TaskSchema = new Schema({
   ],
   useremail: {
     type: String,
-    required: true,
   },
 });
 
